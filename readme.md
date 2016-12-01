@@ -9,11 +9,11 @@ This class, using curses, lets a user select from a simple list of options. The 
 
 ```python
 from picker import *
-    
+
 opts = Picker(
     title = 'Select files to delete',
     options = [
-        ".autofsck", ".autorelabel", "bin/", "boot/", 
+        ".autofsck", ".autorelabel", "bin/", "boot/",
         "cgroup/", "dev/", "etc/", "home/", "installimage.conf",
         "installimage.debug", "lib/", "lib64/", "lost+found/",
         "media/", "mnt/", "opt/", "proc/", "root/",
@@ -44,7 +44,6 @@ if "cgroup/" in opts:
 
 Pretty much everything, but, this little routine is uncommonly handy in its current form. Elsewise:
 
-* Ability to resize window.
 * Page up/down keys.
 * Select / unselect all.
 
