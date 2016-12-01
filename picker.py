@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # This code is available for use under CC0 (Creative Commons 0 - universal).
 # You can copy, modify, distribute and perform the work, even for commercial
@@ -15,6 +15,8 @@
 # cancel returns False
 
 import curses
+import shutil
+import signal
 from curses import wrapper
 
 class Picker:
@@ -34,8 +36,8 @@ class Picker:
     selcount = 0
     aborted = False
 
-    window_height = 15
-    window_width = 60
+    window_height = shutil.get_terminal_size().lines - 10
+    window_width = shutil.get_terminal_size().columns - 20
     all_options = []
     length = 0
 
@@ -43,6 +45,19 @@ class Picker:
         self.stdscr = curses.initscr()
         curses.noecho()
         curses.cbreak()
+        self.win = curses.newwin(
+            5 + self.window_height,
+            self.window_width,
+            2,
+            4
+        )
+
+    def sigwinch_handler(self, n, frame):
+        self.window_height = shutil.get_terminal_size().lines - 10
+        self.window_width = shutil.get_terminal_size().columns - 20
+        curses.endwin()
+        self.stdscr.clear()
+        self.stdscr = curses.initscr()
         self.win = curses.newwin(
             5 + self.window_height,
             self.window_width,
@@ -84,7 +99,11 @@ class Picker:
             else:
                 line_label = self.c_empty + " "
 
-            self.win.addstr(position + 2, 5, line_label + option["label"])
+            if len(option["label"]) > (self.window_width - 20):
+                reduced = option["label"][:self.window_width - 20] + "..."
+            else:
+                reduced = option["label"]
+            self.win.addstr(position + 2, 5, line_label + reduced)
             position = position + 1
 
         # hint for more content above
@@ -152,7 +171,7 @@ class Picker:
 
     def __init__(self, options, title='Select', arrow="-->",
                  footer="Space = toggle, Enter = accept, q = cancel",
-                 more="...", border="||--++++", c_selected="[X]", c_empty="[ ]"):
+                 more="...", border="||--++++", c_selected="[X]", c_empty="[ ]", checked="[ ]"):
         self.title = title
         self.arrow = arrow
         self.footer = footer
@@ -166,10 +185,12 @@ class Picker:
         for option in options:
             self.all_options.append({
                 "label": option,
-                "selected": False
+                "selected": True if (option in checked) else False
             })
             self.length = len(self.all_options)
 
         self.curses_start()
+
+        signal.signal(signal.SIGWINCH, self.sigwinch_handler)
         curses.wrapper( self.curses_loop )
         self.curses_stop()
